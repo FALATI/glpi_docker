@@ -1,4 +1,4 @@
-# GLPI com Docker compose e dados persistentes
+# GLPI com Docker compose
 
 Este repositório com o docker compose necessário para executar o GLPI através de **Docker** em sua ultima versão.
 
@@ -25,7 +25,7 @@ mkdir opt
 
 cd /opt 
 
-git clone https://github.com/ricardo98365/GLPI.git
+git clone https://github.com/FALATI/glpi_docker.git
 
 cd GLPI 
 
@@ -47,7 +47,7 @@ Para acesar o **GLPI** acesse http://<seu_ip>
 
 ```bash
 host: mysql
-usuario: glpi_user
+usuario: glpi
 senha: glpi
 ```
 
