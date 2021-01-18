@@ -3,7 +3,7 @@
 Este repositório com o docker compose necessário para executar o GLPI através de **Docker** em sua ultima versão.
 
 ## Procedimento
-##Instalação do git
+
 sudo apt intall git
 
 ### Instalando o docker:
