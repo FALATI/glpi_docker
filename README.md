@@ -27,7 +27,7 @@ cd /opt
 
 git clone https://github.com/FALATI/glpi_docker.git
 
-cd GLPI 
+cd glpi_docker 
 
 mkdir -p ./var/www/html/glpi \
          ./var/lib/mysql
