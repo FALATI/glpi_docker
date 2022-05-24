@@ -1,28 +1,117 @@
-version: "3.2"
+version: "3.8"
+
+x-logging: &logging
+  logging:
+    driver: 'json-file'
+    options:
+      max-size: '50m'
+      max-file: '5'
+      tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
 services:
-#Mysql Container
-  mysql:
-    image: mysql:5.7.23
-    container_name: mysql
-    hostname: mysql
+# TODO: adicionar suporte a HTTPS
+  traefik:
+    image: traefik:v2.4.6
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
     volumes:
-      - /var/lib/mysql:/var/lib/mysql
-    env_file:
-      - ./mysql.env
-    restart: always
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: true
+    networks:
+      - traefik
+      - glpi
+    <<: *logging
+    command:
+      - --api
+      - --api.dashboard
+      - --providers.docker
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.swarmMode=false
+      - --providers.docker.network=traefik
+      - --entryPoints.web.address=:80
+      - --log.level=INFO
+      - --accesslog=true
+      - --ping
+      - --metrics
+      - --metrics.prometheus
+      - --metrics.prometheus.buckets=0.100000, 0.300000, 1.200000, 5.000000
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addServicesLabels=true
+      - --metrics.prometheus.entryPoint=metrics
+      - --entryPoints.metrics.address=:8082
+    labels:
+      # --- Enabled dashboard access: http://traefik-127-0-0-1.nip.io/
+      # --- User: admin
+      # --- Password: password
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.dashboard.rule=Host(`traefik-127-0-0-1.nip.io`)
+      - traefik.http.routers.dashboard.entryPoints=web
+      - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.routers.dashboard.middlewares=auth
+      - traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$0ON0eMjB$$5F1vytsJjC1MJe0mu12o71
 
-#GLPI Container
   glpi:
-    image: diouxx/glpi
+    image: diouxx/glpi:latest
     container_name : glpi
     hostname: glpi
-    ports:
-      - "80:80"
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /var/www/html/glpi/:/var/www/html/glpi
     environment:
-      - TIMEZONE=America/Sao_Paulo
-    restart: always
+      TIMEZONE: 'America/Recife'
+      VERSION_GLPI: '9.5.6'
+    volumes:
+      - type: bind
+        source: /etc/localtime
+        target: /etc/localtime
+        read_only: true
+      - type: volume
+        source: glpi-data
+        target: /var/www/html/glpi
+    networks:
+      - traefik
+      - glpi
+    <<: *logging
+    depends_on:
+      - mariadb
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.glpi.rule=Host(`glpi-127-0-0-1.nip.io`)
+      - traefik.http.routers.glpi.entryPoints=web
+      - traefik.http.services.glpi.loadbalancer.server.port=80
+
+  mariadb:
+    image: mariadb:10.7.3-focal
+    container_name: glpi-database
+    restart: unless-stopped
+    env_file:
+      - ./mariadb.env
+    volumes:
+      - type: volume
+        source: glpi-database
+        target: /var/lib/mysql
+    networks:
+      - glpi
+    <<: *logging
+
+networks:
+  traefik:
+    name: traefik
+    driver: bridge
+  glpi:
+    name: glpi
+    driver: bridge
+
+volumes:
+  glpi-database:
+    name: glpi-database
+    driver: local
+  glpi-data:
+    name: glpi-data
+    driver: local

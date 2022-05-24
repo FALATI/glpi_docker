@@ -1,61 +1,41 @@
-# GLPI com Docker compose
+# GLPI com Docker Compose
 
-Este repositório com o docker compose necessário para executar o GLPI através de **Docker** em sua ultima versão.
+Este repositório contém os arquivos necessários para executar o GLPI.
 
-## Procedimento
+## Pré-requisitos
 
-sudo apt install git
+- [**Docker Engine**](https://docs.docker.com/engine/install/)
+- [**Docker Compose**](https://docs.docker.com/compose/install/)
 
-### Instalando o docker:
+## Inicializando a Stack
 
 ```bash
-curl -fsSL https://get.docker.com | sh
+docker compose up --detach
 ```
 
-### Instalando do docker-compose
+## Acessando e configurando o GLPI
+
+Observe que no [`docker-compose.yaml`](docker-compose.yaml) o host do GLPI é `glpi-127-0-0-1.nip.io`. Mude este host no compose para o de sua preferência. Ajuste o seu DNS.
+> Os hosts padrões estão utilizando o serviço https://nip.io/ para uso local.
+
+Acessando o GLPI: http://glpi-127-0-0-1.nip.io/
 
 ```bash
-curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
-
-chmod +x /usr/local/bin/docker-compose
-```
-
-### Criando diretório para presistencia de dados e baixando o repositório
-
-```bash
-mkdir opt
-
-cd /opt 
-
-git clone https://github.com/FALATI/glpi_docker.git
-
-cd glpi_docker 
-
-mkdir -p ./var/www/html/glpi \
-         ./var/lib/mysql
-
-chown 472:472 ./var/lib/mysql \
-              ./var/lib/mysql 
-```
-
-### Executando os containers
-
-```bash
-docker-compose up -d
-```
-Para acesar o **GLPI** acesse http://<seu_ip> 
-
-### Configurando GLPI
-
-```bash
-host: mysql
+host: mariadb
 usuario: glpi
 senha: glpi
 ```
 
-### GLPI
+## Usuário e senha padrão para acesso ao GLPI
 
 ```bash
-usuario: glpi
-senha: glpi
+Usuário: glpi
+Senha: glpi
+```
+
+## Acessando o dashboard do Traefik
+```
+URL: http://traefik-127-0-0-1.nip.io/
+Usuário: admin
+Senha: password
 ```
